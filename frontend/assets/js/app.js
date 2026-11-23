@@ -75,7 +75,7 @@ async function sendChatMessage() {
   try {
     const { connect } = await import('./secured-api.js');
 
-    const api = await connect();
+    const api = await connect({ decorateHeader: false });
 
     const response = await api.request('/ai/chat', {
       method: 'POST',

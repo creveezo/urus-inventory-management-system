@@ -1,7 +1,7 @@
 import { setupAuth, onAuthStateChanged, signOut } from './auth-client.js';
 import { renderBusinessSwitcher } from './business-switcher.js';
 import { cachedGet, invalidateBusinessCache } from './api-cache.js';
-export async function connect() {
+export async function connect({ decorateHeader = true } = {}) {
   const auth = await setupAuth();
   const user = await new Promise(resolve => { const off = onAuthStateChanged(auth, value => { off(); resolve(value); }); });
   if (!user) { location.replace('/'); throw new Error('Please sign in'); }
@@ -24,9 +24,11 @@ export async function connect() {
   }
   const me = await get('/me');
   if (!me.businesses.length) { location.replace('/onboarding.html'); throw new Error('Create a business first'); }
-  document.querySelector('.logout-btn')?.addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('urus-business-id'); location.replace('/'); });
   const selected = me.businesses.find(b => String(b.id) === sessionStorage.getItem('urus-business-id')) || me.businesses[0];
-  const heading = document.getElementById('business-name'); if (heading) heading.textContent = selected.name;
-  renderBusinessSwitcher(heading, me.businesses, selected.id, () => location.reload());
+  if (decorateHeader) {
+    document.querySelector('.logout-btn')?.addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('urus-business-id'); location.replace('/'); });
+    const heading = document.getElementById('business-name'); if (heading) heading.textContent = selected.name;
+    renderBusinessSwitcher(heading, me.businesses, selected.id, () => location.reload());
+  }
   return {business:selected, request:(path,options) => get(path, options, selected.id)};
 }
